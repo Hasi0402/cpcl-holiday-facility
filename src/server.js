@@ -85,6 +85,23 @@ app.get("/debug-db", (req, res) => {
   });
 });
 
+const pool = require("./db/pool");
+
+app.get("/debug-test-db", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT current_user, current_database()"
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+      code: err.code,
+      severity: err.severity,
+    });
+  }
+});
+
 // ──────────────────────────────────────────────────────────────────────────
 // Route registration
 // ──────────────────────────────────────────────────────────────────────────
