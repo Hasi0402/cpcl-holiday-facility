@@ -85,19 +85,38 @@ app.get("/debug-db", (req, res) => {
   });
 });
 
-const pool = require("./db/pool");
+const express = require("express");
+const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
-app.get("/debug-test-db", async (req, res) => {
+const pool = require("./db/pool");
+const bcrypt = require("bcryptjs");
+
+app.get("/debug-login", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT current_user, current_database()"
+      `SELECT id, password_hash
+       FROM employees
+       WHERE id = 'ADMIN01'`
     );
-    res.json(result.rows[0]);
+
+    if (!result.rows.length) {
+      return res.json({ error: "ADMIN01 not found" });
+    }
+
+    const user = result.rows[0];
+
+    const match = await bcrypt.compare("admin", user.password_hash);
+
+    res.json({
+      id: user.id,
+      hash: user.password_hash,
+      passwordMatches: match,
+    });
   } catch (err) {
     res.status(500).json({
       message: err.message,
-      code: err.code,
-      severity: err.severity,
+      stack: err.stack,
     });
   }
 });
