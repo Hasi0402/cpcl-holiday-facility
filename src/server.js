@@ -16,6 +16,7 @@ const financeRoutes = require("./routes/financeRoutes");
 const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
+app.set("trust proxy", 1);
 
 // ──────────────────────────────────────────────────────────────────────────
 // CORS
@@ -74,6 +75,14 @@ app.use((req, res, next) => {
 // ──────────────────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "CPCL Holiday Facility API", time: new Date().toISOString() });
+});
+
+app.get("/debug-db", (req, res) => {
+  res.json({
+    databaseUrl: process.env.DATABASE_URL
+      ? process.env.DATABASE_URL.replace(/:(.*?)@/, ":****@")
+      : "MISSING",
+  });
 });
 
 // ──────────────────────────────────────────────────────────────────────────
