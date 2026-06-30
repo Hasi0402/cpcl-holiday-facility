@@ -1,64 +1,264 @@
-# CPCL Holiday Facility — Backend (Phases 1–10)
+# CPCL Holiday Facility Management System — Backend
 
-Continues your existing progress — **schema unchanged**. This package adds the
-layered controller/service architecture and remaining endpoints on top of the
-PostgreSQL schema, migrations, seed data, JWT middleware, email service,
-connection pooling, and audit logging you already built.
+A production-style REST API for the **CPCL Holiday Facility Management System**, built with **Node.js, Express.js, and PostgreSQL** using a layered **Route → Controller → Service** architecture.
 
-## What's New in This Package
+The system enables employees to book CPCL holiday homes, while providing dedicated workflows for IT Admin approval, Finance management, booking cancellations, audit logging, and email notifications.
 
-| Phase | Contents |
-|-------|----------|
-| 1 | `src/server.js`, `src/middleware/errorHandler.js` — Express bootstrap, CORS, rate limiting, centralized error handling |
-| 2 | `src/routes/authRoutes.js`, `controllers/authController.js`, `services/authService.js` — login + /me |
-| 3 | `src/routes/hotelRoutes.js`, `controllers/hotelController.js`, `services/hotelService.js` |
-| 4 | `src/routes/bookingRoutes.js`, `controllers/bookingController.js`, `services/bookingService.js` |
-| 5 | `src/routes/adminRoutes.js`, `controllers/adminController.js`, `services/adminService.js` |
-| 6 | `controllers/cancellationController.js`, `services/cancellationFlowService.js` (wraps your existing `cancellationService.js` fee calculator, unchanged) |
-| 7 | `src/routes/financeRoutes.js`, `controllers/financeController.js`, `services/financeService.js` |
-| 8 | `frontend-integration.js` — drop-in replacement for your localStorage functions |
-| 9 | `postman/CPCL_Holiday_Facility.postman_collection.json`, `TESTING.md` |
-| 10 | `DEPLOYMENT.md`, `.env.example` |
+## Live Demo
 
-**Carried over unchanged** (your existing work, copied as-is into this structure):
-`src/db/pool.js`, `src/db/migrate.js`, `src/db/seed.js`, `src/services/emailService.js`,
-`src/services/cancellationService.js`, `src/services/financialYearService.js`.
+**Frontend:** https://cpcl-holiday-facility-frontend.vercel.app
 
-## Architecture Pattern
+**Frontend Repository:**  
+https://github.com/Hasi0402/cpcl-holiday-facility-frontend
 
-Every feature follows the same three-layer split, per your phase spec:
+# Features
+
+### Authentication & Security
+
+- JWT-based authentication
+- Password hashing using bcrypt
+- Role-based authorization
+- Protected API routes
+- Global API rate limiting
+- Additional login rate limiting
+- Audit logging for security-sensitive operations
+
+### Employee Portal
+
+- Browse available holiday homes
+- View hotel amenities and package details
+- Create holiday booking requests
+- View booking history
+- Cancel bookings
+- Automatic cancellation fee calculation
+- Financial-year booking quota enforcement
+
+### IT Admin Portal
+
+- Review pending booking requests
+- Approve or reject bookings
+- View all bookings
+- Automatic quota restoration on rejected bookings
+
+### Finance Portal
+
+- View cancellation charges
+- Booking statistics
+- Financial-year reports
+- Revenue and cancellation tracking
+
+### Business Rules
+
+- Maximum 3-night booking duration
+- Maximum 5 adults
+- Maximum 4 children
+- Maximum 2 rooms
+- One booking per employee per financial year
+- PostgreSQL row-level locking to prevent concurrent quota violations
+
+### Notifications
+
+- HTML email notifications using Nodemailer
+- Booking submitted
+- Booking approved
+- Booking rejected
+- Booking cancelled
+
+# Tech Stack
+
+### Backend
+
+- Node.js
+- Express.js
+
+### Database
+
+- PostgreSQL
+- pg
+
+### Authentication
+
+- JSON Web Token (JWT)
+- bcryptjs
+
+### Email
+
+- Nodemailer
+
+### Security
+
+- express-rate-limit
+
+# Project Structure
 
 ```
-Route (URL + middleware wiring)
-  → Controller (HTTP: parse req, call service, shape res, no DB/business logic)
-    → Service (business logic + DB queries — the only layer that touches pool.query)
+src
+├── controllers/
+├── services/
+├── routes/
+├── middleware/
+├── db/
+├── utils/
+└── server.js
 ```
 
-`asyncHandler()` wraps every controller method so thrown/rejected errors flow
-into the single global `errorHandler` — no repeated try/catch boilerplate.
-`ApiError(statusCode, message)` is how services signal intentional 4xx errors
-(quota exceeded, not found, wrong role, etc.) up to that handler.
+The project follows a layered architecture where:
 
-## Quick Start
+- Routes define endpoints
+- Controllers handle HTTP requests
+- Services contain business logic
+- Database layer manages PostgreSQL access
+
+---
+
+# Getting Started
+
+Clone the repository
+
+```bash
+git clone https://github.com/Hasi0402/cpcl-holiday-facility.git
+cd cpcl-holiday-facility
+```
+
+Install dependencies
 
 ```bash
 npm install
-cp .env.example .env        # fill in your DB + SMTP credentials
-npm run db:migrate          # safe to re-run — IF NOT EXISTS guards
-npm run db:seed             # safe to re-run — ON CONFLICT DO NOTHING
+```
+
+Create the environment file
+
+```bash
+cp .env.example .env
+```
+
+Update the PostgreSQL and SMTP credentials inside `.env`.
+
+Run database migrations
+
+```bash
+npm run db:migrate
+```
+
+Seed demo data
+
+```bash
+npm run db:seed
+```
+
+Start the development server
+
+```bash
 npm run dev
 ```
 
-Then import `postman/CPCL_Holiday_Facility.postman_collection.json` and run
-the "1. Auth → Login - Employee" request first to get a working session.
+Health Check
 
-See `TESTING.md` for the full endpoint reference and test checklist, and
-`DEPLOYMENT.md` for going to production.
+```
+GET /api/health
+```
 
-## Wiring Your Existing Frontend
+---
 
-Open `frontend-integration.js` — it's written as a direct map from your current
-`getBookings()` / `saveBookings()` / `triggerEmail()` functions to the new API
-calls, with BEFORE/AFTER comments at each one. Your HTML and CSS are not touched;
-only the data-source lines inside your existing `render*()` functions change,
-and those functions become `async`. No UI redesign.
+# Environment Variables
+
+| Variable | Description |
+|------------|-------------|
+| PORT | API Port |
+| DB_HOST | PostgreSQL Host |
+| DB_PORT | PostgreSQL Port |
+| DB_NAME | Database Name |
+| DB_USER | Database User |
+| DB_PASSWORD | Database Password |
+| JWT_SECRET | JWT Signing Secret |
+| JWT_EXPIRES_IN | Token Lifetime |
+| SMTP_HOST | SMTP Host |
+| SMTP_PORT | SMTP Port |
+| SMTP_USER | SMTP Username |
+| SMTP_PASS | SMTP Password |
+| EMAIL_FROM | Sender Email |
+| IT_ADMIN_EMAIL | IT Admin Email |
+| FINANCE_EMAIL | Finance Email |
+| FRONTEND_URL | Allowed Frontend Origin |
+
+---
+
+# Demo Accounts
+
+| Employee ID | Password | Role |
+|--------------|----------|----------------|
+| EMP001 | pass | Supervisor |
+| EMP002 | pass | Non-Supervisor |
+| ADMIN01 | admin | IT Admin |
+| FIN01 | fin | Finance |
+
+---
+
+# REST API
+
+## Authentication
+
+```
+POST   /api/auth/login
+GET    /api/auth/me
+```
+
+## Hotels
+
+```
+GET    /api/hotels
+GET    /api/hotels/:id
+```
+
+## Bookings
+
+```
+POST   /api/bookings
+GET    /api/bookings/my
+GET    /api/bookings/:id
+GET    /api/bookings/quota/status
+```
+
+## Cancellation
+
+```
+GET    /api/bookings/:id/cancellation-preview
+PATCH  /api/bookings/:id/cancel
+```
+
+## IT Admin
+
+```
+GET    /api/admin/bookings
+GET    /api/admin/bookings/pending
+PATCH  /api/admin/bookings/:id/approve
+PATCH  /api/admin/bookings/:id/reject
+```
+
+## Finance
+
+```
+GET    /api/finance/cancellations
+GET    /api/finance/reports
+```
+# Deployment
+
+The backend is deployed on **Render** using **Neon PostgreSQL**.
+
+The frontend is deployed separately on **Vercel**.
+
+# Highlights
+
+- Layered backend architecture
+- Production-style REST API
+- JWT Authentication
+- Role-based Authorization
+- PostgreSQL Transactions
+- Row-Level Locking
+- Audit Logging
+- Email Notifications
+- Secure API Design
+- Render + Neon + Vercel Deployment
+
+# License
+Academic project developed for the **Chennai Petroleum Corporation Limited (CPCL)** Holiday Facility Management System.
